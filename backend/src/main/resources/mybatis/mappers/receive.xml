@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="receive">
+	
+	<select id="findByKeyword" resultType="receivemastervo" parameterType="map">
+		<![CDATA[	
+			SELECT r.code,LEFT(r.date,10) AS 'date',u.name AS 'user_name',b.name AS 'business_name'
+			FROM receive_master r 
+			INNER JOIN business b 
+			ON r.business_code=b.code
+			INNER JOIN user u
+			ON u.id= r.user_id
+			
+		]]>
+		<choose>
+			<when test='rdate!=""'>
+			<![CDATA[
+				WHERE (b.name LIKE CONCAT('%',#{bname },'%') 
+				AND r.code LIKE CONCAT('%',#{rcode },'%')) 
+				AND LEFT(r.date,10)=#{rdate};
+			]]>
+			</when>
+			<otherwise>
+			<![CDATA[
+				WHERE (b.name LIKE CONCAT('%',#{bname },'%') 
+				AND r.code LIKE CONCAT('%',#{rcode },'%')) 
+			]]>
+			</otherwise>
+		</choose>
+	</select>
+	
+	<select id="findByMasterNo" resultType="receivedetailvo" parameterType="string">
+		<![CDATA[	
+			SELECT r.no,r.master_code,r.product_code,p.name AS 'product_name',p.size AS 'product_size',p.unit AS 'product_unit',r.receive_count,r.release_count,(r.receive_count-r.release_count)as stock_count
+			FROM receive_detail r
+			INNER JOIN product p
+			ON r.product_code=p.code
+			WHERE r.master_code=#{rcode }
+		]]>
+	</select>
+	
+	<insert id="insertMaster" parameterType="map">
+		<![CDATA[
+			INSERT INTO receive_master
+			VALUES (#{vo.code}, #{vo.date }, #{vo.businessCode}, #{vo.userId},#{log.id }, #{log.ip}, #{log.dt}, #{log.id }, #{log.ip}, #{log.dt})	
+	  	]]>	  		
+	</insert>
+	
+	<insert id="insertDetail" parameterType="map">
+		<![CDATA[
+			INSERT INTO receive_detail
+			VALUES
+	  	]]>		
+				<foreach collection="list" item="vo" separator=",">
+	        		(
+	        			null,#{vo.productCode},#{vo.masterCode},#{vo.receiveCount},0,#{log.id }, #{log.ip}, #{log.dt}, #{log.id }, #{log.ip}, #{log.dt}
+	       	 		)
+	    		</foreach>
+	</insert>
+	
+	<update id="updateMasterByCode" parameterType="map">
+		<![CDATA[	
+			UPDATE receive_master
+			SET date=#{vo.date}, business_code=#{vo.businessCode},user_id=#{vo.userId},update_id=#{log.id}, update_ip=#{log.ip}, update_dt=#{log.dt}
+			WHERE code=#{vo.code}
+		]]>
+	</update>
+	
+	<update id="updateDetailByCode" parameterType="map">
+		<![CDATA[	
+			UPDATE receive_detail
+			SET receive_count=#{vo.receiveCount},update_id=#{log.id}, update_ip=#{log.ip}, update_dt=#{log.dt}
+			WHERE no=#{vo.no} 
+		]]>
+	</update>
+
+	
+</mapper>
